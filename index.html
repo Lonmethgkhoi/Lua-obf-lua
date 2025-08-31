@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lua Obfuscator</title>
+<style>
+  body {
+    background: linear-gradient(135deg, #1f1f1f, #121212);
+    color: white;
+    font-family: monospace;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #00f0ff;
+    text-shadow: 0 0 10px #00f0ff;
+  }
+
+  textarea {
+    width: 100%;
+    height: 200px;
+    background: #222;
+    color: white;
+    border: 2px solid #00f0ff;
+    border-radius: 10px;
+    padding: 10px;
+    resize: vertical;
+  }
+
+  pre {
+    width: 100%;
+    background: #222;
+    border: 2px solid #00f0ff;
+    border-radius: 10px;
+    padding: 10px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+
+  button {
+    padding: 10px 20px;
+    margin-right: 5px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    background: #00f0ff;
+    text-shadow: 0 0 5px #00f0ff;
+    transition: 0.2s;
+  }
+
+  button:hover {
+    background: #00c8ff;
+    text-shadow: 0 0 10px #00c8ff;
+  }
+
+  #progressContainer {
+    width: 100%;
+    background: #111;
+    border-radius: 10px;
+    margin-top: 10px;
+    height: 10px;
+    overflow: hidden;
+  }
+
+  #progressBar {
+    height: 10px;
+    width: 0%;
+    background: #00f0ff;
+    transition: width 0.2s;
+  }
+
+  .stats {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    flex: 1;
+    min-width: 120px;
+    background: #111;
+    border: 2px solid #00f0ff;
+    border-radius: 10px;
+    text-align: center;
+    padding: 10px;
+    box-shadow: 0 0 10px #00f0ff;
+  }
+</style>
+</head>
+<body>
+
+<h1>Lua Obfuscator</h1>
+
+<textarea id="luaInput" placeholder="Paste your Lua script here..."></textarea>
+
+<div>
+  <button onclick="obfuscate()">Obfuscate</button>
+  <button onclick="copyCode()">Copy</button>
+  <button onclick="downloadCode()">Download Obfuscated Code</button>
+</div>
+
+<div id="progressContainer">
+  <div id="progressBar"></div>
+</div>
+
+<div class="stats">
+  <div class="stat" id="linesStat">Lines: 0</div>
+  <div class="stat" id="sizeStat">Size: 0 bytes</div>
+  <div class="stat" id="junkStat">Junk: 0</div>
+  <div class="stat" id="securityStat">Security: MAX</div>
+</div>
+
+<pre id="output"></pre>
+
+<script>
+const input = document.getElementById('luaInput');
+const output = document.getElementById('output');
+const progressBar = document.getElementById('progressBar');
+const linesStat = document.getElementById('linesStat');
+const sizeStat = document.getElementById('sizeStat');
+const junkStat = document.getElementById('junkStat');
+
+input.addEventListener('input', () => {
+  const code = input.value;
+  linesStat.textContent = "Lines: " + code.split('\n').length;
+  sizeStat.textContent = "Size: " + new Blob([code]).size + " bytes";
+});
+
+function updateProgress(percent){
+  progressBar.style.width = percent + "%";
+}
+
+async function obfuscate(){
+  const code = input.value;
+  if(!code) return alert("Paste Lua code first!");
+
+  output.textContent = "";
+  let percent = 0;
+
+  const interval = setInterval(()=>{
+    percent += Math.random() * 15;
+    if(percent >= 90) percent = 90;
+    updateProgress(percent);
+  }, 100);
+
+  try {
+    const res = await fetch('/api/obfuscate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+
+    clearInterval(interval);
+    updateProgress(100);
+    output.textContent = data.result;
+    junkStat.textContent = "Junk: " + (data.junk || "Randomized");
+
+    setTimeout(()=> updateProgress(0), 300);
+  } catch(e) {
+    clearInterval(interval);
+    alert("API error: " + e.message);
+    updateProgress(0);
+  }
+}
+
+function copyCode(){
+  if(output.textContent){
+    navigator.clipboard.writeText(output.textContent);
+    alert("Copied to clipboard!");
+  }
+}
+
+function downloadCode(){
+  if(!output.textContent) return alert("No obfuscated code to download!");
+  const blob = new Blob([output.textContent], {type:"text/plain"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = "obfuscated.lua";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+
+</body>
+  </html>
