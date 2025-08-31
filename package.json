@@ -1,0 +1,17 @@
+{
+  "name": "lua-obfuscator",
+  "version": "1.0.0",
+  "description": "Lua obfuscator API for frontend HTML",
+  "main": "api/obfuscate.js",
+  "engines": {
+    "node": "18.x"
+  },
+  "dependencies": {
+    "luaparse": "^0.3.1"
+  },
+  "scripts": {
+    "start": "node api/obfuscate.js"
+  },
+  "author": "NovaX",
+  "license": "MIT"
+}
